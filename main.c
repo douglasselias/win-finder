@@ -126,7 +126,6 @@ void list_files_from_dir(const char* path) {
         strcat(dir_name, path);
         strcat(dir_name, "\\");
         strcat(dir_name, filename);
-        printf("> Folder: %s\n", dir_name);
         add_work(dir_name);
       }
     } else {
@@ -137,7 +136,9 @@ void list_files_from_dir(const char* path) {
 }
 
 int main(int argc, char* argv[]) {
-  strcpy(query, argv[1]);
+  char current_directory[MAX_PATH] = {0};
+  strcpy(current_directory, argv[1]);
+  strcpy(query, argv[2]);
 
   u32 total_threads = count_threads() - 1;
   HANDLE* threads = calloc(sizeof(HANDLE), total_threads);
@@ -148,7 +149,8 @@ int main(int argc, char* argv[]) {
   puts("Searching...\n");
 
   clock_t start = clock();
-  list_files_from_dir("C:\\");
+
+  list_files_from_dir(current_directory);
 
   for(u64 i = 0; i < total_threads; i++) {
     threads[i] = CreateThread(NULL, 0, thread_proc, NULL, 0, NULL);

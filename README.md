@@ -2,6 +2,10 @@
 
 Multithreaded CLI files finder for Windows (This software is still in alpha!)
 
+### How to use
+
+Download the binary, then run `win-finder <dir> <query>`
+
 ### Performance
 
 Running the program to search "amd" in the whole filesystem, starting from `C:\`, printing both directory and file path.
