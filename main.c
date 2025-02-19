@@ -48,51 +48,47 @@ u32 count_threads() {
   return sysinfo.dwNumberOfProcessors;
 }
 
-#define MAX_NUMBER_OF_TASKS 4096
+/// @note: This need to be a big number, since to complete each task, it needs to iterate all files in the specified directory. However, while doing this, it adds the directories that were found while iterating the files, thus creating way more tasks to do than its possible to finish.
+#define MAX_NUMBER_OF_TASKS (4096*100)
 char work_to_do[MAX_NUMBER_OF_TASKS][MAX_PATH] = {0};
-s64 write_index = 0;
-s64 read_index  = 0;
-s64 total_work  = 0;
-HANDLE read_mutex;
-HANDLE write_mutex;
-u32 mutexes_timeout_ms = 1000;
+volatile s64 write_index = 0;
+volatile s64 read_index  = 0;
+volatile s64 total_work  = 0;
 
 void add_work(char dir[MAX_PATH]) {
-  u32 wait_result = WaitForSingleObject(write_mutex, mutexes_timeout_ms);
-  if(wait_result == WAIT_TIMEOUT) { puts("Can't add work?"); goto end; }
-  if(total_work == (MAX_NUMBER_OF_TASKS - 1)) goto end;
+  if(total_work == (MAX_NUMBER_OF_TASKS - 1)) {
+    puts("Cannot add work, queue is full!");
+    return;
+  }
 
   s64 original_write_index = write_index;
-  s64 next_write_index = (write_index + 1) % MAX_NUMBER_OF_TASKS;
+  s64 next_write_index = (original_write_index + 1) % MAX_NUMBER_OF_TASKS;
 
-  if(next_write_index == read_index) goto end;
+  if(next_write_index == read_index) {
+    puts("Cannot add work, next write will overwrite the read index!");
+    return;
+  }
 
-  write_index = next_write_index;
+  InterlockedCompareExchange64(&write_index, next_write_index, original_write_index);
   strcpy(work_to_do[original_write_index], dir);
-  total_work++;
-
-end:
-  ReleaseMutex(write_mutex);
+  InterlockedIncrement64(&total_work);
 }
 
 DWORD thread_proc(void* args) {
   clock_t start = clock();
 
   while(true) {
-    if(total_work > 0 && read_index != write_index) {
-      u32 wait_result = WaitForSingleObject(read_mutex, mutexes_timeout_ms);
+    if(total_work > 0) {
       start = clock();
-      switch(wait_result) {
-        case WAIT_OBJECT_0: {
-          s64 original_read_index = read_index;
-          read_index = (read_index + 1) % MAX_NUMBER_OF_TASKS;
-          ReleaseMutex(read_mutex);
-          list_files_from_dir(work_to_do[original_read_index]);
-          memset(work_to_do[original_read_index], 0, MAX_PATH);
-          break;
-        }
-        case WAIT_TIMEOUT: puts("timeout, not possible to do work"); ReleaseMutex(read_mutex); return 0;
-        default: ReleaseMutex(read_mutex);
+
+      s64 original_read_index = read_index;
+      s64 next_read_index = (original_read_index + 1) % MAX_NUMBER_OF_TASKS;
+
+      if(next_read_index != write_index) { 
+        InterlockedCompareExchange64(&read_index, next_read_index, original_read_index);
+        list_files_from_dir(work_to_do[original_read_index]);
+        memset(work_to_do[original_read_index], 0, MAX_PATH);
+        InterlockedDecrement64(&total_work);
       }
     } else {
       clock_t end = clock();
@@ -143,9 +139,6 @@ int main(int argc, char* argv[]) {
   u32 total_threads = count_threads() - 1;
   HANDLE* threads = calloc(sizeof(HANDLE), total_threads);
 
-  read_mutex  = CreateMutex(NULL, false, NULL);
-  write_mutex = CreateMutex(NULL, false, NULL);
-
   puts("Searching...\n");
 
   clock_t start = clock();
@@ -160,5 +153,5 @@ int main(int argc, char* argv[]) {
   clock_t end = clock();
 
   f64 cpu_time_used = (end - start) / CLOCKS_PER_SEC;
-  printf("Done in %.2f seconds\n", cpu_time_used);
+  printf("\nDone in %.2f seconds\n", cpu_time_used);
 }
