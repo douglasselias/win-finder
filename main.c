@@ -49,7 +49,7 @@ u32 count_threads() {
 }
 
 /// @note: This need to be a big number, since to complete each task, it needs to iterate all files in the specified directory. However, while doing this, it adds the directories that were found while iterating the files, thus creating way more tasks to do than its possible to finish.
-#define MAX_NUMBER_OF_TASKS (4096*100)
+#define MAX_NUMBER_OF_TASKS 1000000
 char work_to_do[MAX_NUMBER_OF_TASKS][MAX_PATH] = {0};
 volatile s64 write_index = 0;
 volatile s64 read_index  = 0;
