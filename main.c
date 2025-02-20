@@ -17,6 +17,8 @@ typedef double   f64;
 
 void list_files_from_dir(const char* path);
 
+typedef bool string_match_proc_t(const char* string, const char* pattern);
+
 bool has_substring(const char* haystack, const char* needle) {
   u64 haystack_length = strlen(haystack);
   u64 needle_length   = strlen(needle);
@@ -40,6 +42,16 @@ bool has_substring(const char* haystack, const char* needle) {
   }
 
   return false;
+}
+
+bool simple_fuzzy_match(const char* string, const char* pattern) {
+  while(*string != '\0' && *pattern != '\0')  {
+    if(*string + 32 == *pattern + 32)
+      pattern++;
+    string++;
+  }
+
+  return *pattern == '\0' ? true : false;
 }
 
 u32 count_threads() {
@@ -102,6 +114,7 @@ DWORD thread_proc(void* args) {
 }
 
 char query[70] = {};
+string_match_proc_t *string_match_proc = has_substring;
 
 void list_files_from_dir(const char* path) {
   char search_path[MAX_PATH] = {0};
@@ -124,7 +137,7 @@ void list_files_from_dir(const char* path) {
         add_work(dir_name);
       }
     } else {
-      if(has_substring(filename, query)) {
+      if((*string_match_proc)(filename, query)) {
         printf("%s\\%.20s\n", path, filename);
       }
     }
@@ -135,6 +148,10 @@ int main(int argc, char* argv[]) {
   char current_directory[MAX_PATH] = {0};
   strcpy(current_directory, argv[1]);
   strcpy(query, argv[2]);
+
+  if(argv[3] != NULL && strcmp(argv[3], "fuzzy") == 0) {
+    string_match_proc = simple_fuzzy_match;
+  }
 
   u32 total_threads = count_threads() - 1;
   HANDLE* threads = calloc(sizeof(HANDLE), total_threads);
