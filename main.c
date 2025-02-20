@@ -87,7 +87,6 @@ DWORD thread_proc(void* args) {
       if(next_read_index != write_index) { 
         InterlockedCompareExchange64(&read_index, next_read_index, original_read_index);
         list_files_from_dir(work_to_do[original_read_index]);
-        memset(work_to_do[original_read_index], 0, MAX_PATH);
         InterlockedDecrement64(&total_work);
       }
     } else {
@@ -125,8 +124,9 @@ void list_files_from_dir(const char* path) {
         add_work(dir_name);
       }
     } else {
-      if(has_substring(filename, query))
-        printf("File: %s\\%s\n", path, filename);
+      if(has_substring(filename, query)) {
+        printf("%s\\%.20s\n", path, filename);
+      }
     }
   } while(FindNextFile(find_file_handle, &find_file_data) != 0);
 }
