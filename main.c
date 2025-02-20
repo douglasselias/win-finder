@@ -93,7 +93,7 @@ DWORD thread_proc(void* args) {
     } else {
       clock_t end = clock();
       f64 timeout_in_seconds = (end - start) / CLOCKS_PER_SEC;
-      if(timeout_in_seconds < 2) {
+      if(timeout_in_seconds > 0.5) {
         // puts("no more work....");
         return 0;
       }
