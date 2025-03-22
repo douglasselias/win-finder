@@ -55,14 +55,8 @@ int main(int argc, char* argv[]) {
 char work_to_do[MAX_NUMBER_OF_TASKS][MAX_PATH] = {0};
 volatile s64 write_index = 0;
 volatile s64 read_index  = 0;
-volatile s64 total_work  = 0;
 
 void add_work(char dir[MAX_PATH]) {
-  if(total_work == (MAX_NUMBER_OF_TASKS - 1)) {
-    puts("Cannot add work, queue is full!");
-    return;
-  }
-
   s64 original_write_index = write_index;
   s64 next_write_index = (original_write_index + 1) % MAX_NUMBER_OF_TASKS;
 
@@ -73,14 +67,13 @@ void add_work(char dir[MAX_PATH]) {
 
   InterlockedCompareExchange64(&write_index, next_write_index, original_write_index);
   strcpy(work_to_do[original_write_index], dir);
-  InterlockedIncrement64(&total_work);
 }
 
 DWORD thread_proc(void* args) {
   clock_t start = clock();
 
   while(true) {
-    if(total_work > 0) {
+    if((read_index + 1) % MAX_NUMBER_OF_TASKS != write_index) {
       start = clock();
 
       s64 original_read_index = read_index;
@@ -89,7 +82,6 @@ DWORD thread_proc(void* args) {
       if(next_read_index != write_index) { 
         InterlockedCompareExchange64(&read_index, next_read_index, original_read_index);
         list_files_from_dir(work_to_do[original_read_index]);
-        InterlockedDecrement64(&total_work);
       }
     } else {
       clock_t end = clock();
