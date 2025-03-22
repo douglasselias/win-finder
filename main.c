@@ -57,30 +57,30 @@ volatile s64 write_index = 0;
 volatile s64 read_index  = 0;
 
 void add_work(char dir[MAX_PATH]) {
+  try_again:
   s64 original_write_index = write_index;
   s64 next_write_index = (original_write_index + 1) % MAX_NUMBER_OF_TASKS;
 
-  if(next_write_index == read_index) {
-    puts("Cannot add work, next write will overwrite the read index!");
-    return;
+  s64 previous_write_index = InterlockedCompareExchange64(&write_index, next_write_index, original_write_index);
+  if(previous_write_index == original_write_index) {
+    strcpy(work_to_do[original_write_index], dir);
+  } else {
+    goto try_again;
   }
-
-  InterlockedCompareExchange64(&write_index, next_write_index, original_write_index);
-  strcpy(work_to_do[original_write_index], dir);
 }
 
 DWORD thread_proc(void* args) {
   clock_t start = clock();
 
   while(true) {
-    if((read_index + 1) % MAX_NUMBER_OF_TASKS != write_index) {
+    s64 original_read_index = read_index;
+    s64 next_read_index = (original_read_index + 1) % MAX_NUMBER_OF_TASKS;
+
+    if(next_read_index != write_index) {
       start = clock();
 
-      s64 original_read_index = read_index;
-      s64 next_read_index = (original_read_index + 1) % MAX_NUMBER_OF_TASKS;
-
-      if(next_read_index != write_index) { 
-        InterlockedCompareExchange64(&read_index, next_read_index, original_read_index);
+      s64 previous_read_index = InterlockedCompareExchange64(&read_index, next_read_index, original_read_index);
+      if(previous_read_index == original_read_index) {
         list_files_from_dir(work_to_do[original_read_index]);
       }
     } else {
