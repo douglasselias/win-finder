@@ -24,12 +24,21 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
         pRenderTarget->EndDraw();
         return 0;
       }
-      case WM_KEYDOWN:
       case WM_DESTROY:
       {
         // Cleanup();
         PostQuitMessage(0);
         return 0;
+      }
+      case WM_KEYDOWN:
+      {
+        switch(w_param)
+        {
+          case VK_ESCAPE:
+          case VK_OEM_3:
+          PostQuitMessage(0);
+          return 0;
+        }
       }
     }
 

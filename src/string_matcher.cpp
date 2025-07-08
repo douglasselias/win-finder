@@ -1,4 +1,3 @@
-
 bool has_substring(wchar *haystack, wchar *needle)
 {
   s64 needle_length = wcslen(needle);
@@ -51,3 +50,7 @@ bool simple_fuzzy_match(wchar *haystack, wchar *needle)
 
   return *needle == '\0';
 }
+
+typedef bool string_match_proc_t(wchar *haystack, wchar *needle);
+
+string_match_proc_t *string_match_proc = has_substring;
