@@ -1,13 +1,14 @@
 
 typedef bool string_match_proc_t(wchar *haystack, wchar *needle);
-        bool has_substring      (wchar *haystack, wchar *needle);
-        bool simple_fuzzy_match (wchar *haystack, wchar *needle);
+        // bool has_substring      (wchar *haystack, wchar *needle);
+        // bool simple_fuzzy_match (wchar *haystack, wchar *needle);
 
 wchar query[MAX_PATH];
 string_match_proc_t *string_match_proc = has_substring;
 volatile s64 total_files_scanned = 0;
 volatile s64 total_files_found   = 0;
 
+/// TODO: Use malloc instead.
 #define MAX_NUMBER_OF_TASKS 1000000
 wchar work_to_do[MAX_NUMBER_OF_TASKS][MAX_PATH];
 volatile s64 write_index = 0;
