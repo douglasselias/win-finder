@@ -23,22 +23,19 @@ typedef wchar_t wchar;
 #include "src/ui.cpp"
 #include "src/timer.cpp"
 
-s32 main(s32 argc, wchar* argv[])
+s32 main(s32 argc, char* argv[])
 {
   create_window();
+  
+  mbstowcs(dir,   argv[1], strlen(argv[1]));
+  mbstowcs(query, argv[2], strlen(argv[2]));
 
-  wcscpy(query, argv[2]);
-
-  if(argv[3] != null && wcscmp(argv[3], L"fuzzy") == 0)
+  if(argv[3] != null && strcmp(argv[3], "fuzzy") == 0)
   {
     string_match_proc = simple_fuzzy_match;
   }
 
-  SYSTEM_INFO sysinfo;
-  GetSystemInfo(&sysinfo);
-  s32 total_threads = sysinfo.dwNumberOfProcessors;
-
-  HANDLE *threads = (HANDLE*)calloc(sizeof(HANDLE), total_threads);
+  create_threads();
 
   MSG msg;
   while(GetMessage(&msg, null, 0, 0))
