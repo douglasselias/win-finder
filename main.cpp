@@ -9,6 +9,7 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 #pragma comment(lib, "user32.lib")
+#pragma comment(lib, "gdi32.lib")
 
 typedef int64_t s64;
 typedef int32_t s32;
@@ -18,6 +19,8 @@ typedef wchar_t wchar;
 
 #define null NULL
 
+HWND list;
+
 #include "src/string_matcher.cpp"
 #include "src/finder.cpp"
 #include "src/ui.cpp"
@@ -26,7 +29,7 @@ typedef wchar_t wchar;
 s32 main(s32 argc, char* argv[])
 {
   create_window();
-  
+
   mbstowcs(dir,   argv[1], strlen(argv[1]));
   mbstowcs(query, argv[2], strlen(argv[2]));
 

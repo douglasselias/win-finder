@@ -13,15 +13,24 @@ volatile s64 read_index  = 0;
 wchar results[MAX_NUMBER_OF_TASKS][MAX_PATH];
 volatile s64 results_index = 0;
 
-void add_result(wchar directory[MAX_PATH])
+static bool flag = true;
+
+
+void add_result(wchar result_filepath[MAX_PATH])
 {
+  // if(flag)
+  // {
+  //   // flag = false;
+  // }
+  SendMessage(list, LB_ADDSTRING, 0, (LPARAM)result_filepath);
   s64 original_results_index = results_index;
+  wcscpy(results[original_results_index], result_filepath);
   /// TODO: Circular overwrite.
   s64 next_results_index = (original_results_index + 1) % MAX_NUMBER_OF_TASKS;
   InterlockedCompareExchange64(&results_index, next_results_index, original_results_index);
 }
 
-void add_work(wchar directory[MAX_PATH])
+void add_work(wchar work_directory[MAX_PATH])
 {
   while(true)
   {
@@ -32,13 +41,13 @@ void add_work(wchar directory[MAX_PATH])
 
     if(previous_write_index == original_write_index)
     {
-      wcscpy(work_to_do[original_write_index], directory);
+      wcscpy(work_to_do[original_write_index], work_directory);
       break;
     }
   }
 }
 
-void list_files_from_directory(wchar *current_directory)
+void list_files_from_directory(wchar current_directory[MAX_PATH])
 {
   wchar search_path[MAX_PATH] = {};
   wsprintf(search_path, L"%s\\*", current_directory);
@@ -53,11 +62,12 @@ void list_files_from_directory(wchar *current_directory)
 
     if(is_directory)
     {
+      // if(wcscmp(filename, L".") != 0)
       if(filename[0] != '.')
       {
-        wchar directory[MAX_PATH] = {};
-        wsprintf(directory, L"%s\\%s", current_directory, filename);
-        add_work(directory);
+        wchar work_directory[MAX_PATH] = {};
+        wsprintf(work_directory, L"%s\\%s", current_directory, filename);
+        add_work(work_directory);
       }
     }
     else
@@ -66,9 +76,9 @@ void list_files_from_directory(wchar *current_directory)
 
       if(string_match_proc(filename, query))
       {
-        wchar directory[MAX_PATH] = {};
-        wsprintf(directory, L"%s\\%s", current_directory, filename);
-        add_result(directory);
+        wchar result_filepath[MAX_PATH] = {};
+        wsprintf(result_filepath, L"%s\\%s", current_directory, filename);
+        add_result(result_filepath);
 
         // printf("%ls\\%ls\n", current_directory, filename);
         InterlockedIncrement64(&total_files_found);
@@ -87,7 +97,7 @@ DWORD thread_proc(void *args)
     if(next_read_index != write_index)
     {
       s64 previous_read_index = InterlockedCompareExchange64(&read_index, next_read_index, original_read_index);
-
+      
       if(previous_read_index == original_read_index)
       {
         list_files_from_directory(work_to_do[original_read_index]);
@@ -96,6 +106,7 @@ DWORD thread_proc(void *args)
     else
     {
       // printf("No more work for Thread ID: %ld\n", GetCurrentThreadId());
+      // SendMessage(list, LB_ADDSTRING, 0, (LPARAM)L"No more work");
       return 0;
     }
   }

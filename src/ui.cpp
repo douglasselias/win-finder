@@ -16,68 +16,73 @@ void create_threads()
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 {
-    switch(msg)
+  switch(msg)
+  {
+    // case WM_PAINT:
+    // {
+    //   // render_target->BeginDraw();
+    //   // render_target->Clear(D2D1::ColorF(D2D1::ColorF::White));
+
+    //   // RECT rc;
+    //   // GetClientRect(hwnd, &rc);
+
+    //   // // wchar buffer[MAX_PATH];
+    //   // // DWORD length = GetCurrentDirectory(MAX_PATH, buffer);
+    //   // // render_target->DrawText(buffer, (u32)length, text_format, D2D1::RectF(0, 0, (f32)rc.right, (f32)rc.bottom), brush);
+
+    //   // // wchar *text = L"电视机! Good work! 😎 نطقها نطقًا";
+    //   // wchar *text = results[0];
+    //   // render_target->DrawText(text, (UINT32)wcslen(text), text_format, D2D1::RectF(0, 0, (f32)rc.right, (f32)rc.bottom), brush);
+
+    //   // render_target->EndDraw();
+    //   return 0;
+    // }
+    case WM_DESTROY:
     {
-      case WM_PAINT:
+      // Cleanup();
+      PostQuitMessage(0);
+      return 0;
+    }
+    case WM_CREATE:
+    {
+      list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY, 10, 10, 300, 600, hwnd, null, GetModuleHandle(null), null);
+      break;
+    }
+    case WM_KEYDOWN:
+    {
+      switch(w_param)
       {
-        render_target->BeginDraw();
-        render_target->Clear(D2D1::ColorF(D2D1::ColorF::White));
-
-        RECT rc;
-        GetClientRect(hwnd, &rc);
-
-        // wchar buffer[MAX_PATH];
-        // DWORD length = GetCurrentDirectory(MAX_PATH, buffer);
-        // render_target->DrawText(buffer, (u32)length, text_format, D2D1::RectF(0, 0, (f32)rc.right, (f32)rc.bottom), brush);
-
-        // wchar *text = L"电视机! Good work! 😎 نطقها نطقًا";
-        wchar *text = results[0];
-        render_target->DrawText(text, (UINT32)wcslen(text), text_format, D2D1::RectF(0, 0, (f32)rc.right, (f32)rc.bottom), brush);
-
-        render_target->EndDraw();
-        return 0;
-      }
-      case WM_DESTROY:
-      {
-        // Cleanup();
-        PostQuitMessage(0);
-        return 0;
-      }
-      case WM_KEYDOWN:
-      {
-        switch(w_param)
+        case VK_ESCAPE:
+        case VK_OEM_3:
         {
-          case VK_ESCAPE:
-          case VK_OEM_3:
-          {
-            PostQuitMessage(0);
-            return 0;
-          }
-          case 'A':
-          {
-            MessageBoxA(null, "Pressed A...", "", MB_OK);
-            break;
-          }
-          case VK_SPACE:
-          {
-            MessageBoxA(null, "Start search...", "", MB_OK);
-            list_files_from_directory(dir);
+          PostQuitMessage(0);
+          return 0;
+        }
+        case VK_SPACE:
+        {
+          list_files_from_directory(dir);
 
-            for(s32 i = 0; i < total_threads; i++)
-            {
-              threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
-            }
-
-            WaitForMultipleObjects(total_threads, threads, true, INFINITE);
-
-            SendMessage(hwnd, WM_PAINT, 0, 0);
-            break;
+          for(s32 i = 0; i < total_threads; i++)
+          {
+            threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
           }
+
+          WaitForMultipleObjects(total_threads, threads, true, INFINITE);
+
+          SendMessage(hwnd, WM_PAINT, 0, 0);
+
+          for(s64 i = 0; i < 4; i++)
+          {
+            wprintf(L"Result: %lld, %s\n", i, work_to_do[i]);
+          }
+          break;
         }
       }
+      break;
     }
+  }
 
-    return DefWindowProc(hwnd, msg, w_param, l_param);
+  return DefWindowProc(hwnd, msg, w_param, l_param);
 }
 
 void create_window()
@@ -104,18 +109,21 @@ void create_window()
     0, 0, 0, 0
   );
 
+      // ShowWindow(window, SW_SHOW);
+    // UpdateWindow(window);
+
   /// D2D Init ///
   
-  ID2D1Factory *pD2DFactory = null;
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &pD2DFactory);
+  ID2D1Factory *d2d_factory = null;
+  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2d_factory);
 
-  IDWriteFactory *pDWriteFactory = null;
-  DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&pDWriteFactory);
+  IDWriteFactory *direct_write_factory = null;
+  DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&direct_write_factory);
 
   // ID2D1HwndRenderTarget *render_target = null;
   RECT rc;
   GetClientRect(window, &rc);
-  pD2DFactory->CreateHwndRenderTarget
+  d2d_factory->CreateHwndRenderTarget
   (
     D2D1::RenderTargetProperties(),
     D2D1::HwndRenderTargetProperties(window, D2D1::SizeU(rc.right, rc.bottom)),
@@ -123,7 +131,7 @@ void create_window()
   );
 
   // IDWriteTextFormat *text_format = null;
-  pDWriteFactory->CreateTextFormat(L"", null, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 100.0f, L"", &text_format);
+  direct_write_factory->CreateTextFormat(L"", null, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 100.0f, L"", &text_format);
 
   text_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   text_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
