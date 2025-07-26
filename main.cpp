@@ -1,4 +1,5 @@
 #define UNICODE
+
 #include <windows.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -11,40 +12,33 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
 
-typedef int64_t s64;
-typedef int32_t s32;
-typedef float   f32;
-typedef double  f64;
-typedef wchar_t wchar;
+typedef int64_t  s64;
+typedef int32_t  s32;
+typedef uint64_t u64;
+typedef float    f32;
+typedef double   f64;
+typedef wchar_t  wchar;
 
 #define null NULL
 
 HWND list;
-HANDLE work_semaphore;
+HWND window;
 
 #include "src/string_matcher.cpp"
 #include "src/finder.cpp"
 #include "src/ui.cpp"
 #include "src/timer.cpp"
 
-s32 main(s32 argc, char* argv[])
+s32 main(s32 argc, wchar* argv[])
 {
-  #if 1
   create_window();
 
-  mbstowcs(dir,   argv[1], strlen(argv[1]));
-  mbstowcs(query, argv[2], strlen(argv[2]));
+  wcscpy(dir,   argv[1]);
+  wcscpy(query, argv[2]);
 
-  if(argv[3] != null && strcmp(argv[3], "fuzzy") == 0)
+  if(argc > 3 && wcscmp(argv[3], L"fuzzy") == 0)
   {
     string_match_proc = simple_fuzzy_match;
-  }
-
-  create_threads();
-
-  for(s32 i = 0; i < total_threads; i++)
-  {
-    threads[i] = CreateThread(null, 0, thread_proc, null, CREATE_SUSPENDED, null);
   }
 
   MSG msg;
@@ -55,30 +49,4 @@ s32 main(s32 argc, char* argv[])
   }
 
   return 0;
-#endif
-
-#if 0
-  puts("Searching...\n");
-
-  mbstowcs(dir,   argv[1], strlen(argv[1]));
-  mbstowcs(query, argv[2], strlen(argv[2]));
-
-  create_threads();
-
-  INIT_TIMER
-  START_TIMER
-
-  list_files_from_directory(dir);
-
-  for(s32 i = 0; i < total_threads; i++)
-  {
-    threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
-  }
-
-  WaitForMultipleObjects(total_threads, threads, true, INFINITE);
-
-  STOP_TIMER
-
-  printf("\n Scanned %lld files and found %lld files in %.2f seconds.\n", total_files_scanned, total_files_found, elapsed_time);
-#endif
 }

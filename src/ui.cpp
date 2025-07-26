@@ -2,21 +2,6 @@ ID2D1HwndRenderTarget *render_target = null;
 IDWriteTextFormat *text_format = null;
 ID2D1SolidColorBrush *brush = null;
 
-s32 total_threads = 1;
-HANDLE *threads = null;
-// HANDLE work_semaphore;
-
-void create_threads()
-{
-  SYSTEM_INFO sysinfo;
-  GetSystemInfo(&sysinfo);
-  total_threads = sysinfo.dwNumberOfProcessors;
-
-  threads = (HANDLE*)calloc(sizeof(HANDLE), total_threads);
-
-  work_semaphore = CreateSemaphore(null, 0, MAX_NUMBER_OF_TASKS, null);
-}
-
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 {
   switch(msg)
@@ -64,21 +49,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
         case VK_SPACE:
         {
           list_files_from_directory(dir);
-
-          for(s32 i = 0; i < total_threads; i++)
-          {
-            // threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
-            ResumeThread(threads[i]);
-          }
-
-          WaitForMultipleObjects(total_threads, threads, true, INFINITE);
-
-          SendMessage(hwnd, WM_PAINT, 0, 0);
-
-          for(s64 i = 0; i < 4; i++)
-          {
-            wprintf(L"Result: %lld, %s\n", i, work_to_do[i]);
-          }
+          // SendMessage(hwnd, WM_PAINT, 0, 0);
           break;
         }
       }
@@ -91,7 +62,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
 
 void create_window()
 {
-   wchar class_name[] = L"win_finder";
+  wchar class_name[] = L"win_finder";
 
   WNDCLASS window_class = {};
   window_class.lpfnWndProc   = window_proc;
@@ -106,15 +77,12 @@ void create_window()
   s32 window_x = (screen_width  / 2) - (window_width  / 2);
   s32 window_y = (screen_height / 2) - (window_height / 2);
 
-  HWND window = CreateWindow(
+  window = CreateWindow(
     class_name, L"Win Finder",
     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
     window_x, window_y, window_width, window_height,
     0, 0, 0, 0
   );
-
-      // ShowWindow(window, SW_SHOW);
-    // UpdateWindow(window);
 
   /// D2D Init ///
   
@@ -124,7 +92,6 @@ void create_window()
   IDWriteFactory *direct_write_factory = null;
   DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&direct_write_factory);
 
-  // ID2D1HwndRenderTarget *render_target = null;
   RECT rc;
   GetClientRect(window, &rc);
   d2d_factory->CreateHwndRenderTarget
@@ -134,12 +101,10 @@ void create_window()
     &render_target
   );
 
-  // IDWriteTextFormat *text_format = null;
   direct_write_factory->CreateTextFormat(L"", null, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 100.0f, L"", &text_format);
 
   text_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   text_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  // ID2D1SolidColorBrush *brush = null;
   render_target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &brush);
 }
