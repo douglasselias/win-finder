@@ -4,6 +4,7 @@ ID2D1SolidColorBrush *brush = null;
 
 s32 total_threads = 1;
 HANDLE *threads = null;
+// HANDLE work_semaphore;
 
 void create_threads()
 {
@@ -12,6 +13,8 @@ void create_threads()
   total_threads = sysinfo.dwNumberOfProcessors;
 
   threads = (HANDLE*)calloc(sizeof(HANDLE), total_threads);
+
+  work_semaphore = CreateSemaphore(null, 0, MAX_NUMBER_OF_TASKS, null);
 }
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
@@ -64,7 +67,8 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
 
           for(s32 i = 0; i < total_threads; i++)
           {
-            threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
+            // threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
+            ResumeThread(threads[i]);
           }
 
           WaitForMultipleObjects(total_threads, threads, true, INFINITE);

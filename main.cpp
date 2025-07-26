@@ -20,6 +20,7 @@ typedef wchar_t wchar;
 #define null NULL
 
 HWND list;
+HANDLE work_semaphore;
 
 #include "src/string_matcher.cpp"
 #include "src/finder.cpp"
@@ -28,6 +29,7 @@ HWND list;
 
 s32 main(s32 argc, char* argv[])
 {
+  #if 1
   create_window();
 
   mbstowcs(dir,   argv[1], strlen(argv[1]));
@@ -40,6 +42,11 @@ s32 main(s32 argc, char* argv[])
 
   create_threads();
 
+  for(s32 i = 0; i < total_threads; i++)
+  {
+    threads[i] = CreateThread(null, 0, thread_proc, null, CREATE_SUSPENDED, null);
+  }
+
   MSG msg;
   while(GetMessage(&msg, null, 0, 0))
   {
@@ -48,14 +55,20 @@ s32 main(s32 argc, char* argv[])
   }
 
   return 0;
+#endif
 
 #if 0
   puts("Searching...\n");
 
+  mbstowcs(dir,   argv[1], strlen(argv[1]));
+  mbstowcs(query, argv[2], strlen(argv[2]));
+
+  create_threads();
+
   INIT_TIMER
   START_TIMER
 
-  list_files_from_directory(argv[1]);
+  list_files_from_directory(dir);
 
   for(s32 i = 0; i < total_threads; i++)
   {
