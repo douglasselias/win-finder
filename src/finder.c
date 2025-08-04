@@ -50,6 +50,7 @@ void list_files_from_directory(wchar *current_directory)
   HANDLE find_file_handle = FindFirstFile(search_path, &find_file_data);
   if(find_file_handle == INVALID_HANDLE_VALUE) return;
 static s32 post_count = 0; // Counter to throttle PostMessage
+static ULONGLONG last_post_time = 0; // Track last PostMessage time
   do
   {
     bool is_directory = find_file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
@@ -76,8 +77,13 @@ static s32 post_count = 0; // Counter to throttle PostMessage
 
         // printf("%ls\n", directory);
 
-if (post_count++ % 10 == 0) // Post every 10th result
-  Sleep(500); // Brief delay to prevent UI flooding
+// if (post_count++ % 10 == 0) // Post every 10th result
+//   Sleep(100); // Brief delay to prevent UI flooding // TODO: HACK!!! Does not work with small number of files.
+
+  ULONGLONG current_time = GetTickCount64();
+        if (current_time - last_post_time < 20)
+          Sleep(20 - (DWORD)(current_time - last_post_time)); // Wait only if needed
+        last_post_time = GetTickCount64();
 
         LRESULT result = SendMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
 

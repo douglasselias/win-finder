@@ -192,6 +192,24 @@ case LB_ADDSTRING:
       {
         if (LOWORD(w_param) == 1001 && HIWORD(w_param) == BN_CLICKED) // Search button clicked
         {
+          // for(s32 i = 0; i < total_threads; i++)
+          // {
+          //   TerminateThread(threads[i], 0);
+          // }
+
+          // WaitForMultipleObjects(total_threads, threads, TRUE, 1000);
+          for (s32 i = 0; i < total_threads; i++){
+            TerminateThread(threads[i], 0);
+            CloseHandle(threads[i]);
+          }
+
+            MSG msg__;
+        while (PeekMessage(&msg__, list, LB_ADDSTRING, LB_ADDSTRING, PM_REMOVE))
+        {
+          if (msg__.lParam)
+            free((wchar*)msg__.lParam); // Free memory from pending messages
+        }
+
           // Get directory from editDir
           GetWindowText(editDir, dir, MAX_PATH);
           // Get query from editQuery
@@ -219,6 +237,29 @@ case LB_ADDSTRING:
 
           SetTimer(hwnd, 1, 100, NULL); // Start timer for counter updates
         }
+        else if (LOWORD(w_param) == 0 && HIWORD(w_param) == LBN_DBLCLK) // Double-click on list box
+      {
+        LRESULT index = SendMessage(list, LB_GETCURSEL, 0, 0);
+        if (index != LB_ERR)
+        {
+          wchar text[MAX_PATH];
+          SendMessage(list, LB_GETTEXT, index, (LPARAM)text);
+          if (OpenClipboard(hwnd))
+          {
+            EmptyClipboard();
+            size_t len = wcslen(text) + 1;
+            HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(wchar));
+            if (hMem)
+            {
+              wchar* clipText = (wchar*)GlobalLock(hMem);
+              wcscpy(clipText, text);
+              GlobalUnlock(hMem);
+              SetClipboardData(CF_UNICODETEXT, hMem);
+            }
+            CloseClipboard();
+          }
+        }
+      }
         break;
       }
       case WM_KEYDOWN:
