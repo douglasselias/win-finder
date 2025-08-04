@@ -52,7 +52,7 @@ void list_files_from_directory(wchar *current_directory)
   WIN32_FIND_DATA find_file_data;
   HANDLE find_file_handle = FindFirstFile(search_path, &find_file_data);
   if(find_file_handle == INVALID_HANDLE_VALUE) return;
-
+static s32 post_count = 0; // Counter to throttle PostMessage
   do
   {
     bool is_directory = find_file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
@@ -86,9 +86,24 @@ void list_files_from_directory(wchar *current_directory)
 // {
 //   printf("Failed to post to list box: %ls\n", directory);
 // }
+if (post_count++ % 10 == 0) // Post every 10th result
+  Sleep(1000); // Brief delay to prevent UI flooding
 
         LRESULT result = SendMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
         repaint_window(window);
+
+// wchar *temp = _wcsdup(directory);
+//         if (temp)
+//         {
+//           if (PostMessage(list, LB_ADDSTRING, 0, (LPARAM)temp) == 0)
+//           {
+//             printf("Failed to post message\n");
+//             free(temp);
+//           } else {
+//         repaint_window(window);
+//           }
+//         }
+
         // if (result == LB_ERR || result == LB_ERRSPACE)
         // {
         //   printf("Failed to add to list box: %ls\n", directory);

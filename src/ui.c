@@ -25,6 +25,13 @@ void repaint_window(HWND hwnd)
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 {
+static HWND editDir = NULL;  // Edit control for directory
+static HWND editQuery = NULL; // Edit control for query
+static HWND btnSearch = NULL; // Search button
+static HWND labelDir = NULL;  // Label for directory
+static HWND labelQuery = NULL; // Label for query
+static HBRUSH hBrush = NULL;
+
     switch(msg)
     {
       case WM_CREATE:
@@ -97,6 +104,18 @@ RECT clientRect;
       repaint_window(hwnd);
         break;
       }
+case LB_ADDSTRING:
+    {
+      if (l_param)
+      {
+        LRESULT result = SendMessage(list, LB_ADDSTRING, w_param, l_param);
+        free((wchar*)l_param);
+        repaint_window(hwnd);
+        return result;
+      }
+      break;
+    }
+
       case WM_CTLCOLORSTATIC:
       {
         // Set background color for static controls (labels)
@@ -145,6 +164,9 @@ RECT clientRect;
           {
             threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
           }
+            // WaitForMultipleObjects(total_threads, threads, true, INFINITE);
+            // WaitForMultipleObjects(total_threads, threads, true, 1000);
+
           // repaint_window(hwnd);
         }
         break;
@@ -167,12 +189,11 @@ RECT clientRect;
           }
           case VK_SPACE:
           {
-            list_files_from_directory(dir);
 
-            for(s32 i = 0; i < total_threads; i++)
-            {
-              threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
-            }
+            // for(s32 i = 0; i < total_threads; i++)
+            // {
+            //   threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
+            // }
 
             // WaitForMultipleObjects(total_threads, threads, true, INFINITE);
             // WaitForMultipleObjects(total_threads, threads, true, 5000);

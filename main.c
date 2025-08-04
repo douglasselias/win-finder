@@ -26,12 +26,6 @@ typedef wchar_t wchar;
 
 HWND window;
 HWND list;
-HWND editDir = NULL;  // Edit control for directory
-HWND editQuery = NULL; // Edit control for query
-HWND btnSearch = NULL; // Search button
-HWND labelDir = NULL;  // Label for directory
-HWND labelQuery = NULL; // Label for query
-HBRUSH hBrush = NULL;
 
 wchar dir[MAX_PATH] = {0};
 
