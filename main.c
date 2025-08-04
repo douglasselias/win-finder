@@ -4,9 +4,14 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <shlobj_core.h>
+#include <combaseapi.h>
 
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
+#pragma comment(lib, "comdlg32.lib")
+#pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "ole32.lib")
 
 typedef   signed int       s32;
 typedef   signed long long s64;
@@ -21,6 +26,13 @@ typedef wchar_t wchar;
 
 HWND window;
 HWND list;
+HWND editDir = NULL;  // Edit control for directory
+HWND editQuery = NULL; // Edit control for query
+HWND btnSearch = NULL; // Search button
+HWND labelDir = NULL;  // Label for directory
+HWND labelQuery = NULL; // Label for query
+HBRUSH hBrush = NULL;
+
 wchar dir[MAX_PATH] = {0};
 
 #include "src/string_matcher.c"
@@ -41,6 +53,7 @@ wchar dir[MAX_PATH] = {0};
 
 s32 main(s32 argc, char *argv[])
 {
+  CoInitialize(NULL); // Initialize COM
   mbstowcs(dir,   argv[1], strlen(argv[1]));
   mbstowcs(query, argv[2], strlen(argv[2]));
 

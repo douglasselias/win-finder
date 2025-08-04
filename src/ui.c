@@ -29,7 +29,20 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
     {
       case WM_CREATE:
       {
-        list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY, 10, 100, window_width - (10 * 4), window_height - (10 * 2), hwnd, null, GetModuleHandle(null), null);
+hBrush = CreateSolidBrush(RGB(255, 255, 255)); // White color
+
+RECT clientRect;
+      GetClientRect(hwnd, &clientRect);
+      s32 clientWidth = clientRect.right - clientRect.left;
+      s32 labelWidth = 80;
+      s32 inputWidth = 420;
+      s32 buttonWidth = 90;
+      s32 buttonHeight = 30;
+      s32 totalInputWidth = labelWidth + inputWidth;
+      s32 inputX = (clientWidth - totalInputWidth) / 2; // Center inputs and labels
+      s32 buttonX = (clientWidth - buttonWidth) / 2;    // Center button
+
+        list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | WS_BORDER, 10, 120, window_width - (10 * 4), window_height - (10 * 16), hwnd, null, GetModuleHandle(null), null);
         // SendMessage(list, LB_INITSTORAGE, 10000, 10000 * MAX_PATH);
 
         hFont = CreateFont(
@@ -50,7 +63,46 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
       );
       SendMessage(list, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
+    //  labelDir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, 10, 15, 80, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+    //   SendMessage(labelDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
+    //   // Create directory input
+    //   editDir = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 90, 10, 420, 25, hwnd, NULL, GetModuleHandle(NULL), NULL);
+    //   SendMessage(editDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
+    labelDir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, inputX, 15, labelWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      SendMessage(labelDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
+      // Create directory input
+      editDir = CreateWindow(L"EDIT", L"C:\\Users\\Douglas\\Code", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, inputX + labelWidth, 10, inputWidth, 25, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      SendMessage(editDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
+      // Create query label
+      // labelQuery = CreateWindow(L"STATIC", L"Query:", WS_CHILD | WS_VISIBLE | SS_LEFT, 10, 45, 80, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      // SendMessage(labelQuery, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      labelQuery = CreateWindow(L"STATIC", L"Query:", WS_CHILD | WS_VISIBLE | SS_LEFT, inputX, 45, labelWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      SendMessage(labelQuery, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
+      // Create query input
+   // Create query input
+      editQuery = CreateWindow(L"EDIT", L".cpp", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, inputX + labelWidth, 40, inputWidth, 25, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      SendMessage(editQuery, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      // Create search button
+      // btnSearch = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 520, 10, 90, 55, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
+      // SendMessage(btnSearch, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
+      btnSearch = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, buttonX, 75, buttonWidth, buttonHeight, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
+      SendMessage(btnSearch, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
+      repaint_window(hwnd);
         break;
+      }
+      case WM_CTLCOLORSTATIC:
+      {
+        // Set background color for static controls (labels)
+        HDC hdcStatic = (HDC)w_param;
+        SetBkColor(hdcStatic, RGB(255, 255, 255)); // White background
+        return (LRESULT)hBrush;
       }
       case WM_PAINT:
       {
@@ -69,12 +121,33 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
         // render_target->DrawText(text, (UINT32)wcslen(text), text_format, D2D1::RectF(0, 0, (f32)rc.right, (f32)rc.bottom), brush);
 
         // render_target->EndDraw();
-        return 0;
+        // return 0;
+        break;
       }
       case WM_DESTROY:
       {
         PostQuitMessage(0);
         return 0;
+      }
+      case WM_COMMAND:
+      {
+        if (LOWORD(w_param) == 1001 && HIWORD(w_param) == BN_CLICKED) // Search button clicked
+        {
+          // Get directory from editDir
+          GetWindowText(editDir, dir, MAX_PATH);
+          // Get query from editQuery
+          GetWindowText(editQuery, query, MAX_PATH);
+          // Clear list box
+          SendMessage(list, LB_RESETCONTENT, 0, 0);
+          // Start search
+          list_files_from_directory(dir);
+          for(s32 i = 0; i < total_threads; i++)
+          {
+            threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
+          }
+          // repaint_window(hwnd);
+        }
+        break;
       }
       case WM_KEYDOWN:
       {
@@ -95,7 +168,6 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
           case VK_SPACE:
           {
             list_files_from_directory(dir);
-            // add_work(dir);
 
             for(s32 i = 0; i < total_threads; i++)
             {
