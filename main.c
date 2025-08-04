@@ -3,15 +3,9 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <shlobj_core.h>
-#include <combaseapi.h>
 
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
-#pragma comment(lib, "comdlg32.lib")
-#pragma comment(lib, "shell32.lib")
-#pragma comment(lib, "ole32.lib")
 
 typedef   signed int       s32;
 typedef   signed long long s64;
@@ -26,9 +20,8 @@ typedef wchar_t wchar;
 
 HWND window;
 HWND list;
-
-HWND labelScanned = NULL; // Label for total files scanned
-HWND labelFound = NULL;   // Label for total files found
+HWND labelScanned;
+HWND labelFound;
 
 wchar dir[MAX_PATH] = {0};
 
@@ -37,30 +30,9 @@ wchar dir[MAX_PATH] = {0};
 #include "src/timer.c"
 #include "src/ui.c"
 
-// HANDLE *create_threads()
-// {
-//   SYSTEM_INFO sysinfo;
-//   GetSystemInfo(&sysinfo);
-//   u32 threads_count = sysinfo.dwNumberOfProcessors;
-
-//   u32 total_threads = threads_count - 1;
-//   HANDLE *threads = calloc(sizeof(HANDLE), total_threads);
-//   return threads;
-// }
-
 s32 main(s32 argc, char *argv[])
 {
-  CoInitialize(NULL); // Initialize COM
-  mbstowcs(dir,   argv[1], strlen(argv[1]));
-  mbstowcs(query, argv[2], strlen(argv[2]));
-
-  // printf("Current directory: %ls\n", dir);
-  // printf("Query            : %ls\n", query);
-
-  if(argv[3] != null && strcmp(argv[3], "fuzzy") == 0)
-  {
-    string_match_proc = simple_fuzzy_match;
-  }
+  string_match_proc = simple_fuzzy_match;
 
   create_threads();
   
