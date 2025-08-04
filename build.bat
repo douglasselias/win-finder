@@ -1,19 +1,17 @@
 @echo off
 
-cl
-
-if %ERRORLEVEL% neq 0 (
-  call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-)
-
 cls
+where /q cl || call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 
 rmdir /S /Q .\build
 mkdir build
+
 pushd .\build
 
-cl /nologo /O2 /diagnostics:caret /sdl /Wall /WX /W4 /wd4189 /wd4996 /wd4100 /wd4244 /wd4255 /wd5045 /wd4711 /wd4710 ..\main.c
+echo * > .gitignore
 
-main.exe C:\ raddbg
+cl /nologo /O2 /diagnostics:caret /Wall /WX /W4 /wd4668 /wd4996 /wd4100 /wd4255 /wd5045 /wd4711 /wd4710 /wd4189 ..\main.c
 
 popd
+
+build\main.exe C: raddbg
