@@ -15,6 +15,7 @@ cl /nologo /fsanitize=address /Z7 /diagnostics:caret /Wall /WX /W4 /wd4668 /wd49
 popd
 
 if exist build\main.exe (
-  build\main.exe C: raddbg
+  @REM build\main.exe C: raddbg
+  build\main.exe C: .cpp
   @REM build\main.exe C:\Users\Douglas\Code\win-finder .c
 )

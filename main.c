@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #pragma comment(lib, "user32.lib")
+#pragma comment(lib, "gdi32.lib")
 
 typedef   signed int       s32;
 typedef   signed long long s64;

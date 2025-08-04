@@ -6,6 +6,7 @@ s32 total_threads = 1;
 HANDLE *threads = null;
 s32 window_width  = 600;
 s32 window_height = 600;
+HFONT hFont = null;
 
 void create_threads()
 {
@@ -28,7 +29,27 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
     {
       case WM_CREATE:
       {
-        list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY, 10, 10, window_width - 10, window_height - 10, hwnd, null, GetModuleHandle(null), null);
+        list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY, 10, 100, window_width - (10 * 4), window_height - (10 * 2), hwnd, null, GetModuleHandle(null), null);
+        // SendMessage(list, LB_INITSTORAGE, 10000, 10000 * MAX_PATH);
+
+        hFont = CreateFont(
+        20,                        // Font height (approx. point size, adjust as needed)
+        0,                         // Width (0 for default)
+        0,                         // Escapement
+        0,                         // Orientation
+        FW_NORMAL,                 // Weight (FW_NORMAL, FW_BOLD, etc.)
+        FALSE,                     // Italic
+        FALSE,                     // Underline
+        FALSE,                     // Strikeout
+        DEFAULT_CHARSET,           // Charset
+        OUT_DEFAULT_PRECIS,        // Output precision
+        CLIP_DEFAULT_PRECIS,       // Clipping precision
+        DEFAULT_QUALITY,           // Quality
+        DEFAULT_PITCH | FF_SWISS,  // Pitch and family
+        L"Segoe UI"                   // Font family
+      );
+      SendMessage(list, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+
         break;
       }
       case WM_PAINT:

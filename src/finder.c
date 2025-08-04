@@ -78,7 +78,7 @@ void list_files_from_directory(wchar *current_directory)
         wsprintf(directory, L"%s\\%s", current_directory, filename);
         // add_result(directory);
 
-        printf("%ls\n", directory);
+        // printf("%ls\n", directory);
 
 //         wchar *temp = _wcsdup(directory); // All
 // BOOL result = PostMessage(list, LB_ADDSTRING, 0, (LPARAM)temp);
