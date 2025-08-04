@@ -32,7 +32,6 @@ void add_work(wchar directory[MAX_PATH])
 
     if(previous_write_index == original_write_index)
     {
-      // printf("Actually adding work: %ls\n", directory);
       wcscpy(work_to_do[original_write_index], directory);
       break;
     }
@@ -46,8 +45,6 @@ void list_files_from_directory(wchar *current_directory)
   wchar search_path[MAX_PATH] = {};
   wsprintf(search_path, L"%s\\*", current_directory);
 
-  // printf("Search path: %ls\n", search_path);
-  // printf("Current directory: %ls\n", current_directory);
 
   WIN32_FIND_DATA find_file_data;
   HANDLE find_file_handle = FindFirstFile(search_path, &find_file_data);
@@ -65,7 +62,6 @@ static s32 post_count = 0; // Counter to throttle PostMessage
         wchar directory[MAX_PATH] = {};
         wsprintf(directory, L"%s\\%s", current_directory, filename);
         add_work(directory);
-        // printf("Adding work: %ls\n", directory);
       }
     }
     else
@@ -80,16 +76,27 @@ static s32 post_count = 0; // Counter to throttle PostMessage
 
         // printf("%ls\n", directory);
 
-//         wchar *temp = _wcsdup(directory); // All
-// BOOL result = PostMessage(list, LB_ADDSTRING, 0, (LPARAM)temp);
-// if (!result)
-// {
-//   printf("Failed to post to list box: %ls\n", directory);
-// }
 if (post_count++ % 10 == 0) // Post every 10th result
-  Sleep(1000); // Brief delay to prevent UI flooding
+  Sleep(500); // Brief delay to prevent UI flooding
 
         LRESULT result = SendMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
+
+          // wchar buffer_scanned[32] = {0};
+          // wsprintf(buffer_scanned, L"Scanned: %lld", total_files_scanned);
+          // SetWindowText(labelScanned, buffer_scanned);
+
+          // wchar buffer_found[32] = {0};
+          // wsprintf(buffer_found, L"Found: %lld", total_files_found);
+          // SetWindowText(labelFound, buffer_found);
+
+        //   wchar buffer_scanned[64];
+        //   _snwprintf(buffer_scanned, 64, L"Scanned: %lld", total_files_scanned);
+        //   SetWindowTextW(labelScanned, buffer_scanned);
+
+        //   wchar buffer_found[64];
+        // _snwprintf(buffer_found, 64, L"Found: %lld", total_files_found);
+        // SetWindowTextW(labelFound, buffer_found);
+
         repaint_window(window);
 
 // wchar *temp = _wcsdup(directory);
@@ -103,29 +110,6 @@ if (post_count++ % 10 == 0) // Post every 10th result
 //         repaint_window(window);
 //           }
 //         }
-
-        // if (result == LB_ERR || result == LB_ERRSPACE)
-        // {
-        //   printf("Failed to add to list box: %ls\n", directory);
-        // }
-        // else
-        // {
-        //   printf("Added to list box: %ls\n", directory);
-        // }
-
-        // LRESULT result = SendMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
-        // if (result == LB_ERR) {
-        //     printf("Failed to add item to listbox: %ls\n", directory);
-        // } else {
-        //     printf("Added to listbox: %ls\n", directory);
-        // }
-        // bool r = PostMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
-        // if(r == 0) {
-        //     printf("Failed to add item to listbox: %ls\n", directory);
-        // }
-        //  else {
-        //     printf("Added to listbox: %ls\n", directory);
-        // }
         InterlockedIncrement64(&total_files_found);
       }
     }
@@ -155,28 +139,6 @@ DWORD thread_proc(void *args)
     {
       list_files_from_directory(work_to_do[original_read_index]);
     }
-    // s64 original_read_index = read_index;
-    // s64 next_read_index = (original_read_index + 1) % MAX_NUMBER_OF_TASKS;
-
-    // if(next_read_index != write_index)
-    // {
-    //   s64 previous_read_index = InterlockedCompareExchange64(&read_index, next_read_index, original_read_index);
-
-    //   if(previous_read_index == original_read_index)
-    //   {
-    //     list_files_from_directory(work_to_do[original_read_index]);
-    //   }
-    // }
-    // else
-    // {
-    //   break;
-    //   // if (InterlockedCompareExchange64(&read_index, read_index, read_index) == write_index &&
-    //   //     InterlockedCompareExchange64(&write_index, write_index, write_index) == read_index)
-    //   // {
-    //   //   break; // No more work and no pending directories
-    //   // }
-    //   // Sleep(1); // Prevent busy-waiting, give other threads a chance to add work
-    // }
   }
 
   // printf("No more work for Thread ID: %ld\n", GetCurrentThreadId());

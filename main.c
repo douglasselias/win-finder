@@ -27,6 +27,9 @@ typedef wchar_t wchar;
 HWND window;
 HWND list;
 
+HWND labelScanned = NULL; // Label for total files scanned
+HWND labelFound = NULL;   // Label for total files found
+
 wchar dir[MAX_PATH] = {0};
 
 #include "src/string_matcher.c"
