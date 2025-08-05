@@ -7,7 +7,7 @@ void allocate_threads()
   GetSystemInfo(&system_info);
   total_threads = system_info.dwNumberOfProcessors;
 
-  threads = (HANDLE*)calloc(sizeof(HANDLE), total_threads);
+  threads = calloc(sizeof(HANDLE), total_threads);
 }
 
 void run_threads()
@@ -15,13 +15,5 @@ void run_threads()
   for(s32 i = 0; i < total_threads; i++)
   {
     threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
-  }
-}
-
-void terminate_threads()
-{
-  for(s32 i = 0; i < total_threads; i++)
-  {
-    TerminateThread(threads[i], 0);
   }
 }

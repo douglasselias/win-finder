@@ -24,7 +24,7 @@ HWND label_found;
 #include "src/thread.c"
 #include "src/ui.c"
 
-s32 main(s32 argc, char *argv[])
+s32 main()
 {
   allocate_threads();
   

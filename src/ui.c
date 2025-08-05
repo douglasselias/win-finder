@@ -25,10 +25,14 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
   static HWND label_query;
   static HWND input_query;
   static HWND button_search;
+  static HWND checkbox_fuzzy;
+
+  static u64 button_search_id  = 1001;
+  static u64 checkbox_fuzzy_id = 1002;
+  static u64 listbox_id        = 1003;
 
   static HBRUSH brush;
   static HFONT font;
-  static HWND checkbox_fuzzy;
 
   switch(msg)
   {
@@ -63,7 +67,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
       s32 counter_x = input_x + total_input_width + 10;
       s32 checkbox_x = (client_width - checkbox_width) / 2;
 
-      list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | WS_BORDER, 10, 150, window_width - (10 * 4), window_height - (10 * 16), hwnd, null, GetModuleHandle(null), null);
+      list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | WS_BORDER, 10, 150, window_width - (10 * 4), window_height - (10 * 16), hwnd, (HMENU)listbox_id, GetModuleHandle(null), null);
       set_font(font, list);
 
       label_dir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, input_x, 15, label_width, 20, hwnd, null, GetModuleHandle(null), null);
@@ -78,7 +82,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
       input_query = CreateWindow(L"EDIT", L"main.cpp", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, input_x + label_width, 40, input_width, 25, hwnd, null, GetModuleHandle(null), null);
       set_font(font, input_query);
 
-      button_search = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, button_x, 110, button_width, button_height, hwnd, (HMENU)1001, GetModuleHandle(null), null);
+      button_search = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, button_x, 110, button_width, button_height, hwnd, (HMENU)button_search_id, GetModuleHandle(null), null);
       set_font(font, button_search);
 
       _snwprintf(buffer_scanned, 64, buffer_scanned_format, (s64)0);
@@ -93,9 +97,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
 
       checkbox_fuzzy = CreateWindow(L"BUTTON", L"Enable fuzzy search", WS_CHILD | WS_VISIBLE | BS_CHECKBOX, checkbox_x, 75, checkbox_width, 20, hwnd, (HMENU)1002, GetModuleHandle(null), null);
       set_font(font, checkbox_fuzzy);
-      SendMessage(checkbox_fuzzy, BM_SETCHECK, BST_UNCHECKED, 0);
 
-      repaint_window(hwnd);
       break;
     }
     case WM_TIMER:
@@ -128,7 +130,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
     case WM_COMMAND:
     {
       // Search button clicked
-      if(LOWORD(w_param) == 1001 && HIWORD(w_param) == BN_CLICKED)
+      if(LOWORD(w_param) == button_search_id && HIWORD(w_param) == BN_CLICKED)
       {
         total_files_scanned = 0;
         total_files_found   = 0;
@@ -143,7 +145,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
 
         SetTimer(hwnd, 1, 300, null); // Start timer for counter updates
       }
-      else if(LOWORD(w_param) == 1002 && HIWORD(w_param) == BN_CLICKED)
+      else if(LOWORD(w_param) == checkbox_fuzzy_id && HIWORD(w_param) == BN_CLICKED)
       {
         LRESULT checked = SendMessage(checkbox_fuzzy, BM_GETCHECK, 0, 0);
         if(checked == BST_CHECKED)
@@ -158,7 +160,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
         }
       }
       // Double click to copy item list path to clipboard
-      else if(LOWORD(w_param) == 0 && HIWORD(w_param) == LBN_DBLCLK)
+      else if(LOWORD(w_param) == listbox_id && HIWORD(w_param) == LBN_DBLCLK)
       {
         LRESULT index = SendMessage(list, LB_GETCURSEL, 0, 0);
         wchar path[MAX_PATH];
@@ -203,7 +205,6 @@ void create_window()
   WNDCLASS window_class = {};
   window_class.lpfnWndProc   = window_proc;
   window_class.lpszClassName = class_name;
-  window_class.hCursor       = LoadCursor(null, IDC_ARROW);
   RegisterClass(&window_class);
 
   s32 screen_width  = GetSystemMetrics(SM_CXSCREEN);
