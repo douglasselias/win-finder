@@ -13,39 +13,30 @@ void repaint_window(HWND hwnd)
   UpdateWindow(hwnd);
 }
 
+void set_font(HFONT font, HWND hwnd)
+{
+  SendMessage(hwnd, WM_SETFONT, (WPARAM)font, MAKELPARAM(true, 0));
+}
+
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 {
-  static HWND editDir;
-  static HWND editQuery;
-  static HWND btnSearch;
-  static HWND labelDir;
-  static HWND labelQuery;
-  static HBRUSH hBrush;
-  static HFONT hFont;
+  static HWND label_dir;
+  static HWND input_dir;
+  static HWND label_query;
+  static HWND input_query;
+  static HWND button_search;
+
+  static HBRUSH brush;
+  static HFONT font;
+  static HWND checkbox_fuzzy;
 
   switch(msg)
   {
     case WM_CREATE:
     {
-      hBrush = CreateSolidBrush(RGB(255, 255, 255));
+      brush = CreateSolidBrush(RGB(255, 255, 255));
 
-      RECT clientRect;
-      GetClientRect(hwnd, &clientRect);
-      s32 clientWidth = clientRect.right - clientRect.left;
-      s32 labelWidth = 80;
-      s32 inputWidth = 420;
-      s32 buttonWidth = 90;
-      s32 buttonHeight = 30;
-      s32 counterWidth = 200; // Width for scanned/found labels
-      s32 totalInputWidth = labelWidth + inputWidth;
-      s32 inputX = (clientWidth - totalInputWidth) / 2; // Center inputs and labels
-      s32 buttonX = (clientWidth - buttonWidth) / 2;    // Center button
-      s32 counterX = inputX + totalInputWidth + 10; // Right of inputs
-
-      list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | WS_BORDER, 10, 120, window_width - (10 * 4), window_height - (10 * 16), hwnd, null, GetModuleHandle(null), null);
-      SendMessage(list, LB_INITSTORAGE, 10000, 10000 * MAX_PATH);
-
-      hFont = CreateFont(
+      font = CreateFont(
         20,
         0, 0, 0,
         FW_NORMAL,
@@ -53,62 +44,81 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
         L"Segoe UI"
       );
-      SendMessage(list, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
-      labelDir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, inputX, 15, labelWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(labelDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      RECT client_rect;
+      GetClientRect(hwnd, &client_rect);
+      s32 client_width = client_rect.right - client_rect.left;
 
-      // Create directory input
-      editDir = CreateWindow(L"EDIT", L"C:\\Users\\Douglas\\Code\\win-finder", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, inputX + labelWidth, 10, inputWidth, 25, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(editDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      s32 label_width = 80;
+      s32 input_width = 420;
+      s32 button_width = 90;
+      s32 button_height = 30;
+      s32 counter_width = 200;
+      s32 checkbox_width = 150;
 
-      // Create query label
-      labelQuery = CreateWindow(L"STATIC", L"Query:", WS_CHILD | WS_VISIBLE | SS_LEFT, inputX, 45, labelWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(labelQuery, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      s32 total_input_width = label_width + input_width;
 
-      editQuery = CreateWindow(L"EDIT", L".c", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, inputX + labelWidth, 40, inputWidth, 25, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(editQuery, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      s32 input_x = (client_width - total_input_width) / 2;
+      s32 button_x = (client_width - button_width) / 2;
+      s32 counter_x = input_x + total_input_width + 10;
+      s32 checkbox_x = (client_width - checkbox_width) / 2;
 
-      btnSearch = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, buttonX, 75, buttonWidth, buttonHeight, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
-      SendMessage(btnSearch, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | WS_BORDER, 10, 150, window_width - (10 * 4), window_height - (10 * 16), hwnd, null, GetModuleHandle(null), null);
+      set_font(font, list);
+
+      label_dir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, input_x, 15, label_width, 20, hwnd, null, GetModuleHandle(null), null);
+      set_font(font, label_dir);
+
+      input_dir = CreateWindow(L"EDIT", L"C:\\Users\\Douglas\\Code\\win-finder", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, input_x + label_width, 10, input_width, 25, hwnd, null, GetModuleHandle(null), null);
+      set_font(font, input_dir);
+
+      label_query = CreateWindow(L"STATIC", L"Query:", WS_CHILD | WS_VISIBLE | SS_LEFT, input_x, 45, label_width, 20, hwnd, null, GetModuleHandle(null), null);
+      set_font(font, label_query);
+
+      input_query = CreateWindow(L"EDIT", L".c", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, input_x + label_width, 40, input_width, 25, hwnd, null, GetModuleHandle(null), null);
+      set_font(font, input_query);
+
+      button_search = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, button_x, 110, button_width, button_height, hwnd, (HMENU)1001, GetModuleHandle(null), null);
+      set_font(font, button_search);
 
       _snwprintf(buffer_scanned, 64, buffer_scanned_format, (s64)0);
 
-      label_scanned = CreateWindow(L"STATIC", buffer_scanned, WS_CHILD | WS_VISIBLE | SS_LEFT, counterX, 15, counterWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(label_scanned, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      label_scanned = CreateWindow(L"STATIC", buffer_scanned, WS_CHILD | WS_VISIBLE | SS_LEFT, counter_x, 15, counter_width, 20, hwnd, null, GetModuleHandle(null), null);
+      set_font(font, label_scanned);
 
       _snwprintf(buffer_found, 64, buffer_found_format, (s64)0);
 
-      label_found = CreateWindow(L"STATIC", buffer_found, WS_CHILD | WS_VISIBLE | SS_LEFT, counterX, 45, counterWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(label_found, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      label_found = CreateWindow(L"STATIC", buffer_found, WS_CHILD | WS_VISIBLE | SS_LEFT, counter_x, 45, counter_width, 20, hwnd, null, GetModuleHandle(null), null);
+      set_font(font, label_found);
+
+      checkbox_fuzzy = CreateWindow(L"BUTTON", L"Enable fuzzy search", WS_CHILD | WS_VISIBLE | BS_CHECKBOX, checkbox_x, 75, checkbox_width, 20, hwnd, (HMENU)1002, GetModuleHandle(null), null);
+      set_font(font, checkbox_fuzzy);
+      SendMessage(checkbox_fuzzy, BM_SETCHECK, BST_UNCHECKED, 0);
 
       repaint_window(hwnd);
       break;
     }
     case WM_TIMER:
     {
-      if(w_param == 1)
+      _snwprintf(buffer_scanned, 64, buffer_scanned_format, total_files_scanned);
+      SetWindowText(label_scanned, buffer_scanned);
+
+      _snwprintf(buffer_found, 64, buffer_found_format, total_files_found);
+      SetWindowText(label_found, buffer_found);
+
+      if(read_index == write_index)
       {
-        _snwprintf(buffer_scanned, 64, buffer_scanned_format, total_files_scanned);
-        SetWindowTextW(label_scanned, buffer_scanned);
-
-        _snwprintf(buffer_found, 64, buffer_found_format, total_files_found);
-        SetWindowTextW(label_found, buffer_found);
-
-        if(read_index == write_index)
-        {
-          KillTimer(hwnd, 1);
-        }
-
-        repaint_window(hwnd);
+        KillTimer(hwnd, 1);
       }
+
+      repaint_window(hwnd);
+
       break;
     }
     case WM_CTLCOLORSTATIC: // Needed for painting the labels background white.
     {
-      HDC hdcStatic = (HDC)w_param;
-      SetBkColor(hdcStatic, RGB(255, 255, 255));
-      return (LRESULT)hBrush;
+      SetBkColor((HDC)w_param, RGB(255, 255, 255));
+      return (LRESULT)brush;
     }
     case WM_DESTROY:
     {
@@ -120,20 +130,11 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
       // Search button clicked
       if(LOWORD(w_param) == 1001 && HIWORD(w_param) == BN_CLICKED)
       {
-        terminate_threads();
-
-        MSG msg__;
-        while (PeekMessage(&msg__, list, LB_ADDSTRING, LB_ADDSTRING, PM_REMOVE))
-        {
-          if(msg__.lParam)
-            free((wchar*)msg__.lParam); // Free memory from pending messages
-        }
-
         total_files_scanned = 0;
-        total_files_found = 0;
+        total_files_found   = 0;
 
-        GetWindowText(editDir, dir, MAX_PATH);
-        GetWindowText(editQuery, query, MAX_PATH);
+        GetWindowText(input_dir,   dir,   MAX_PATH);
+        GetWindowText(input_query, query, MAX_PATH);
 
         SendMessage(list, LB_RESETCONTENT, 0, 0);
 
@@ -142,28 +143,39 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
 
         SetTimer(hwnd, 1, 300, null); // Start timer for counter updates
       }
-      else if (LOWORD(w_param) == 0 && HIWORD(w_param) == LBN_DBLCLK) // Double-click on list box
+      else if(LOWORD(w_param) == 1002 && HIWORD(w_param) == BN_CLICKED)
+      {
+        LRESULT checked = SendMessage(checkbox_fuzzy, BM_GETCHECK, 0, 0);
+        if(checked == BST_CHECKED)
+        {
+          SendMessage(checkbox_fuzzy, BM_SETCHECK, BST_UNCHECKED, 0);
+          string_match_proc = has_substring;
+        }
+        else
+        {
+          SendMessage(checkbox_fuzzy, BM_SETCHECK, BST_CHECKED, 0);
+          string_match_proc = simple_fuzzy_match;
+        }
+      }
+      // Double click to copy item list path to clipboard
+      else if(LOWORD(w_param) == 0 && HIWORD(w_param) == LBN_DBLCLK)
       {
         LRESULT index = SendMessage(list, LB_GETCURSEL, 0, 0);
-        if (index != LB_ERR)
-        {
-          wchar text[MAX_PATH];
-          SendMessage(list, LB_GETTEXT, index, (LPARAM)text);
-          if (OpenClipboard(hwnd))
-          {
-            EmptyClipboard();
-            size_t len = wcslen(text) + 1;
-            HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(wchar));
-            if(hMem)
-            {
-              wchar* clipText = (wchar*)GlobalLock(hMem);
-              wcscpy(clipText, text);
-              GlobalUnlock(hMem);
-              SetClipboardData(CF_UNICODETEXT, hMem);
-            }
-            CloseClipboard();
-          }
-        }
+        wchar path[MAX_PATH];
+        SendMessage(list, LB_GETTEXT, index, (LPARAM)path);
+
+        OpenClipboard(hwnd);
+        EmptyClipboard();
+
+        size_t len = wcslen(path) + 1;
+        HGLOBAL clip_text_memory = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(wchar));
+
+        wchar* clip_text = (wchar*)GlobalLock(clip_text_memory);
+        wcscpy(clip_text, path);
+        GlobalUnlock(clip_text_memory);
+
+        SetClipboardData(CF_UNICODETEXT, clip_text_memory);
+        CloseClipboard();
       }
       break;
     }

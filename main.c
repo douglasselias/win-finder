@@ -26,9 +26,6 @@ HWND label_found;
 
 s32 main(s32 argc, char *argv[])
 {
-  // TODO: Add checkbox?
-  // string_match_proc = simple_fuzzy_match;
-
   allocate_threads();
   
   create_window();
