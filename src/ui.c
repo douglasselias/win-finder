@@ -69,13 +69,13 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param
       label_dir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, input_x, 15, label_width, 20, hwnd, null, GetModuleHandle(null), null);
       set_font(font, label_dir);
 
-      input_dir = CreateWindow(L"EDIT", L"C:\\Users\\Douglas\\Code\\win-finder", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, input_x + label_width, 10, input_width, 25, hwnd, null, GetModuleHandle(null), null);
+      input_dir = CreateWindow(L"EDIT", L"C:\\Users\\Douglas\\Code\\tmp\\win_finder_test_folder", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, input_x + label_width, 10, input_width, 25, hwnd, null, GetModuleHandle(null), null);
       set_font(font, input_dir);
 
       label_query = CreateWindow(L"STATIC", L"Query:", WS_CHILD | WS_VISIBLE | SS_LEFT, input_x, 45, label_width, 20, hwnd, null, GetModuleHandle(null), null);
       set_font(font, label_query);
 
-      input_query = CreateWindow(L"EDIT", L".c", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, input_x + label_width, 40, input_width, 25, hwnd, null, GetModuleHandle(null), null);
+      input_query = CreateWindow(L"EDIT", L"main.cpp", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, input_x + label_width, 40, input_width, 25, hwnd, null, GetModuleHandle(null), null);
       set_font(font, input_query);
 
       button_search = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, button_x, 110, button_width, button_height, hwnd, (HMENU)1001, GetModuleHandle(null), null);
