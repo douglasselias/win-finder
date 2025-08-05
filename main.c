@@ -27,7 +27,6 @@ wchar dir[MAX_PATH] = {0};
 
 #include "src/string_matcher.c"
 #include "src/finder.c"
-#include "src/timer.c"
 #include "src/ui.c"
 
 s32 main(s32 argc, char *argv[])

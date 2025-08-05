@@ -9,18 +9,6 @@ wchar work_to_do[MAX_NUMBER_OF_TASKS][MAX_PATH];
 volatile s64 write_index = 0;
 volatile s64 read_index  = 0;
 
-// TODO: Use malloc instead.
-wchar results[MAX_NUMBER_OF_TASKS][MAX_PATH];
-volatile s64 results_index = 0;
-
-void add_result(wchar directory[MAX_PATH])
-{
-  s64 original_results_index = results_index;
-  // TODO: Circular overwrite.
-  s64 next_results_index = (original_results_index + 1) % MAX_NUMBER_OF_TASKS;
-  InterlockedCompareExchange64(&results_index, next_results_index, original_results_index);
-}
-
 void add_work(wchar directory[MAX_PATH])
 {
   while(true)
@@ -45,12 +33,13 @@ void list_files_from_directory(wchar *current_directory)
   wchar search_path[MAX_PATH] = {};
   wsprintf(search_path, L"%s\\*", current_directory);
 
-
   WIN32_FIND_DATA find_file_data;
   HANDLE find_file_handle = FindFirstFile(search_path, &find_file_data);
   if(find_file_handle == INVALID_HANDLE_VALUE) return;
-static s32 post_count = 0; // Counter to throttle PostMessage
-static ULONGLONG last_post_time = 0; // Track last PostMessage time
+
+  static s32 post_count = 0; // Counter to throttle PostMessage
+  static u64 last_post_time = 0; // Track last PostMessage time
+
   do
   {
     bool is_directory = find_file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
@@ -73,49 +62,19 @@ static ULONGLONG last_post_time = 0; // Track last PostMessage time
       {
         wchar directory[MAX_PATH] = {};
         wsprintf(directory, L"%s\\%s", current_directory, filename);
-        // add_result(directory);
 
-        // printf("%ls\n", directory);
-
-// if (post_count++ % 10 == 0) // Post every 10th result
-//   Sleep(100); // Brief delay to prevent UI flooding // TODO: HACK!!! Does not work with small number of files.
-
-  ULONGLONG current_time = GetTickCount64();
-        if (current_time - last_post_time < 20)
+        u64 current_time = GetTickCount64();
+        if(current_time - last_post_time < 20)
+        {
           Sleep(20 - (DWORD)(current_time - last_post_time)); // Wait only if needed
+        }
+
         last_post_time = GetTickCount64();
 
         LRESULT result = SendMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
 
-          // wchar buffer_scanned[32] = {0};
-          // wsprintf(buffer_scanned, L"Scanned: %lld", total_files_scanned);
-          // SetWindowText(labelScanned, buffer_scanned);
-
-          // wchar buffer_found[32] = {0};
-          // wsprintf(buffer_found, L"Found: %lld", total_files_found);
-          // SetWindowText(labelFound, buffer_found);
-
-        //   wchar buffer_scanned[64];
-        //   _snwprintf(buffer_scanned, 64, L"Scanned: %lld", total_files_scanned);
-        //   SetWindowTextW(labelScanned, buffer_scanned);
-
-        //   wchar buffer_found[64];
-        // _snwprintf(buffer_found, 64, L"Found: %lld", total_files_found);
-        // SetWindowTextW(labelFound, buffer_found);
-
         repaint_window(window);
 
-// wchar *temp = _wcsdup(directory);
-//         if (temp)
-//         {
-//           if (PostMessage(list, LB_ADDSTRING, 0, (LPARAM)temp) == 0)
-//           {
-//             printf("Failed to post message\n");
-//             free(temp);
-//           } else {
-//         repaint_window(window);
-//           }
-//         }
         InterlockedIncrement64(&total_files_found);
       }
     }

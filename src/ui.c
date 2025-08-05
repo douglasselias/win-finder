@@ -1,7 +1,3 @@
-// ID2D1HwndRenderTarget *render_target = null;
-// IDWriteTextFormat *text_format = null;
-// ID2D1SolidColorBrush *brush = null;
-
 s32 total_threads = 1;
 HANDLE *threads = null;
 s32 window_width  = 600;
