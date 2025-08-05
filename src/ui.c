@@ -1,23 +1,11 @@
-s32 total_threads = 1;
-HANDLE *threads = null;
 s32 window_width  = 600;
 s32 window_height = 600;
-HFONT hFont = null;
 
 wchar buffer_scanned[64] = {0};
 #define buffer_scanned_format L"Total files scanned: %lld"
 
 wchar buffer_found[64] = {0};
 #define buffer_found_format L"Total files found: %lld"
-
-void create_threads()
-{
-  SYSTEM_INFO system_info;
-  GetSystemInfo(&system_info);
-  total_threads = system_info.dwNumberOfProcessors;
-
-  threads = (HANDLE*)calloc(sizeof(HANDLE), total_threads);
-}
 
 void repaint_window(HWND hwnd)
 {
@@ -27,23 +15,21 @@ void repaint_window(HWND hwnd)
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 {
-static HWND editDir = NULL;  // Edit control for directory
-static HWND editQuery = NULL; // Edit control for query
-static HWND btnSearch = NULL; // Search button
-static HWND labelDir = NULL;  // Label for directory
-static HWND labelQuery = NULL; // Label for query
-static HBRUSH hBrush = NULL;
+  static HWND editDir;
+  static HWND editQuery;
+  static HWND btnSearch;
+  static HWND labelDir;
+  static HWND labelQuery;
+  static HBRUSH hBrush;
+  static HFONT hFont;
 
-// HWND labelScanned = NULL; // Label for total files scanned
-// HWND labelFound = NULL;   // Label for total files found
-
-    switch(msg)
+  switch(msg)
+  {
+    case WM_CREATE:
     {
-      case WM_CREATE:
-      {
-hBrush = CreateSolidBrush(RGB(255, 255, 255)); // White color
+      hBrush = CreateSolidBrush(RGB(255, 255, 255));
 
-RECT clientRect;
+      RECT clientRect;
       GetClientRect(hwnd, &clientRect);
       s32 clientWidth = clientRect.right - clientRect.left;
       s32 labelWidth = 80;
@@ -56,35 +42,20 @@ RECT clientRect;
       s32 buttonX = (clientWidth - buttonWidth) / 2;    // Center button
       s32 counterX = inputX + totalInputWidth + 10; // Right of inputs
 
-        list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | WS_BORDER, 10, 120, window_width - (10 * 4), window_height - (10 * 16), hwnd, null, GetModuleHandle(null), null);
-        // SendMessage(list, LB_INITSTORAGE, 10000, 10000 * MAX_PATH);
+      list = CreateWindow(L"LISTBOX", null,  WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | WS_BORDER, 10, 120, window_width - (10 * 4), window_height - (10 * 16), hwnd, null, GetModuleHandle(null), null);
+      SendMessage(list, LB_INITSTORAGE, 10000, 10000 * MAX_PATH);
 
-        hFont = CreateFont(
-        20,                        // Font height (approx. point size, adjust as needed)
-        0,                         // Width (0 for default)
-        0,                         // Escapement
-        0,                         // Orientation
-        FW_NORMAL,                 // Weight (FW_NORMAL, FW_BOLD, etc.)
-        FALSE,                     // Italic
-        FALSE,                     // Underline
-        FALSE,                     // Strikeout
-        DEFAULT_CHARSET,           // Charset
-        OUT_DEFAULT_PRECIS,        // Output precision
-        CLIP_DEFAULT_PRECIS,       // Clipping precision
-        DEFAULT_QUALITY,           // Quality
-        DEFAULT_PITCH | FF_SWISS,  // Pitch and family
-        L"Segoe UI"                   // Font family
+      hFont = CreateFont(
+        20,
+        0, 0, 0,
+        FW_NORMAL,
+        false, false, false,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
+        L"Segoe UI"
       );
       SendMessage(list, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
-    //  labelDir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, 10, 15, 80, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
-    //   SendMessage(labelDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
-
-    //   // Create directory input
-    //   editDir = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 90, 10, 420, 25, hwnd, NULL, GetModuleHandle(NULL), NULL);
-    //   SendMessage(editDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
-
-    labelDir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, inputX, 15, labelWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      labelDir = CreateWindow(L"STATIC", L"Directory:", WS_CHILD | WS_VISIBLE | SS_LEFT, inputX, 15, labelWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
       SendMessage(labelDir, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
       // Create directory input
@@ -95,7 +66,6 @@ RECT clientRect;
       labelQuery = CreateWindow(L"STATIC", L"Query:", WS_CHILD | WS_VISIBLE | SS_LEFT, inputX, 45, labelWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
       SendMessage(labelQuery, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
-   // Create query input
       editQuery = CreateWindow(L"EDIT", L".c", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, inputX + labelWidth, 40, inputWidth, 25, hwnd, NULL, GetModuleHandle(NULL), NULL);
       SendMessage(editQuery, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
@@ -104,102 +74,75 @@ RECT clientRect;
 
       _snwprintf(buffer_scanned, 64, buffer_scanned_format, (s64)0);
 
-      labelScanned = CreateWindow(L"STATIC", buffer_scanned, WS_CHILD | WS_VISIBLE | SS_LEFT, counterX, 15, counterWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(labelScanned, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      label_scanned = CreateWindow(L"STATIC", buffer_scanned, WS_CHILD | WS_VISIBLE | SS_LEFT, counterX, 15, counterWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      SendMessage(label_scanned, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
-      // Create found files label
       _snwprintf(buffer_found, 64, buffer_found_format, (s64)0);
 
-      labelFound = CreateWindow(L"STATIC", buffer_found, WS_CHILD | WS_VISIBLE | SS_LEFT, counterX, 45, counterWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
-      SendMessage(labelFound, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+      label_found = CreateWindow(L"STATIC", buffer_found, WS_CHILD | WS_VISIBLE | SS_LEFT, counterX, 45, counterWidth, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+      SendMessage(label_found, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
       repaint_window(hwnd);
-        break;
-      }
-case LB_ADDSTRING:
-    {
-      if (l_param)
-      {
-        LRESULT result = SendMessage(list, LB_ADDSTRING, w_param, l_param);
-        free((wchar*)l_param);
-        repaint_window(hwnd);
-        return result;
-      }
       break;
     }
-
     case WM_TIMER:
     {
-      if (w_param == 1)
+      if(w_param == 1)
       {
         _snwprintf(buffer_scanned, 64, buffer_scanned_format, total_files_scanned);
-        SetWindowTextW(labelScanned, buffer_scanned);
+        SetWindowTextW(label_scanned, buffer_scanned);
 
         _snwprintf(buffer_found, 64, buffer_found_format, total_files_found);
-        SetWindowTextW(labelFound, buffer_found);
+        SetWindowTextW(label_found, buffer_found);
 
-        if (read_index == write_index) // Stop timer when search completes
+        if(read_index == write_index)
+        {
           KillTimer(hwnd, 1);
+        }
+
         repaint_window(hwnd);
       }
       break;
     }
-
-      case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORSTATIC: // Needed for painting the labels background white.
+    {
+      HDC hdcStatic = (HDC)w_param;
+      SetBkColor(hdcStatic, RGB(255, 255, 255));
+      return (LRESULT)hBrush;
+    }
+    case WM_DESTROY:
+    {
+      PostQuitMessage(0);
+      return 0;
+    }
+    case WM_COMMAND:
+    {
+      // Search button clicked
+      if(LOWORD(w_param) == 1001 && HIWORD(w_param) == BN_CLICKED)
       {
-        // Set background color for static controls (labels)
-        HDC hdcStatic = (HDC)w_param;
-        SetBkColor(hdcStatic, RGB(255, 255, 255)); // White background
-        return (LRESULT)hBrush;
-      }
-      case WM_DESTROY:
-      {
-        PostQuitMessage(0);
-        return 0;
-      }
-      case WM_COMMAND:
-      {
-        if (LOWORD(w_param) == 1001 && HIWORD(w_param) == BN_CLICKED) // Search button clicked
-        {
-          // for(s32 i = 0; i < total_threads; i++)
-          // {
-          //   TerminateThread(threads[i], 0);
-          // }
+        terminate_threads();
 
-          // WaitForMultipleObjects(total_threads, threads, TRUE, 1000);
-          for (s32 i = 0; i < total_threads; i++){
-            TerminateThread(threads[i], 0);
-            CloseHandle(threads[i]);
-          }
-
-          
-
-            MSG msg__;
+        MSG msg__;
         while (PeekMessage(&msg__, list, LB_ADDSTRING, LB_ADDSTRING, PM_REMOVE))
         {
-          if (msg__.lParam)
+          if(msg__.lParam)
             free((wchar*)msg__.lParam); // Free memory from pending messages
         }
 
-total_files_scanned = 0;
-total_files_found = 0;
+        total_files_scanned = 0;
+        total_files_found = 0;
 
-          // Get directory from editDir
-          GetWindowText(editDir, dir, MAX_PATH);
-          // Get query from editQuery
-          GetWindowText(editQuery, query, MAX_PATH);
-          // Clear list box
-          SendMessage(list, LB_RESETCONTENT, 0, 0);
-          // Start search
-          list_files_from_directory(dir);
-          for(s32 i = 0; i < total_threads; i++)
-          {
-            threads[i] = CreateThread(null, 0, thread_proc, null, 0, null);
-          }
+        GetWindowText(editDir, dir, MAX_PATH);
+        GetWindowText(editQuery, query, MAX_PATH);
 
-          SetTimer(hwnd, 1, 300, null); // Start timer for counter updates
-        }
-        else if (LOWORD(w_param) == 0 && HIWORD(w_param) == LBN_DBLCLK) // Double-click on list box
+        SendMessage(list, LB_RESETCONTENT, 0, 0);
+
+        list_files_from_directory(dir);
+        run_threads();
+
+        SetTimer(hwnd, 1, 300, null); // Start timer for counter updates
+      }
+      else if (LOWORD(w_param) == 0 && HIWORD(w_param) == LBN_DBLCLK) // Double-click on list box
       {
         LRESULT index = SendMessage(list, LB_GETCURSEL, 0, 0);
         if (index != LB_ERR)
@@ -211,7 +154,7 @@ total_files_found = 0;
             EmptyClipboard();
             size_t len = wcslen(text) + 1;
             HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(wchar));
-            if (hMem)
+            if(hMem)
             {
               wchar* clipText = (wchar*)GlobalLock(hMem);
               wcscpy(clipText, text);
@@ -222,23 +165,23 @@ total_files_found = 0;
           }
         }
       }
-        break;
-      }
-      case WM_KEYDOWN:
+      break;
+    }
+    case WM_KEYDOWN:
+    {
+      switch(w_param)
       {
-        switch(w_param)
+        case VK_ESCAPE:
+        case VK_OEM_3:
         {
-          case VK_ESCAPE:
-          case VK_OEM_3:
-          {
-            PostQuitMessage(0);
-            return 0;
-          }
+          PostQuitMessage(0);
+          return 0;
         }
       }
     }
+  }
 
-    return DefWindowProc(hwnd, msg, w_param, l_param);
+  return DefWindowProc(hwnd, msg, w_param, l_param);
 }
 
 void create_window()
@@ -264,6 +207,4 @@ void create_window()
     window_x, window_y, window_width, window_height,
     0, 0, 0, 0
   );
-
-  SendMessage(list, LB_INITSTORAGE, 10000, 10000 * MAX_PATH);
 }

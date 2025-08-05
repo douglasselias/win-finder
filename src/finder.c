@@ -3,7 +3,7 @@ wchar query[MAX_PATH];
 volatile s64 total_files_scanned = 0;
 volatile s64 total_files_found   = 0;
 
-// TODO: Use malloc instead.
+// TODO: I think it would be better to use calloc since it could hold way more tasks.
 #define MAX_NUMBER_OF_TASKS 1000000
 wchar work_to_do[MAX_NUMBER_OF_TASKS][MAX_PATH];
 volatile s64 write_index = 0;
@@ -37,8 +37,7 @@ void list_files_from_directory(wchar *current_directory)
   HANDLE find_file_handle = FindFirstFile(search_path, &find_file_data);
   if(find_file_handle == INVALID_HANDLE_VALUE) return;
 
-  static s32 post_count = 0; // Counter to throttle PostMessage
-  static u64 last_post_time = 0; // Track last PostMessage time
+  static u64 last_post_time = 0;
 
   do
   {
@@ -64,14 +63,16 @@ void list_files_from_directory(wchar *current_directory)
         wsprintf(directory, L"%s\\%s", current_directory, filename);
 
         u64 current_time = GetTickCount64();
-        if(current_time - last_post_time < 20)
+        u64 delta_time = current_time - last_post_time;
+
+        if(delta_time < 20) // 20ms
         {
-          Sleep(20 - (DWORD)(current_time - last_post_time)); // Wait only if needed
+          Sleep(20 - (DWORD)delta_time);
         }
 
         last_post_time = GetTickCount64();
 
-        LRESULT result = SendMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
+        SendMessage(list, LB_ADDSTRING, 0, (LPARAM)directory);
 
         repaint_window(window);
 
@@ -90,11 +91,12 @@ DWORD thread_proc(void *args)
 
     if (original_read_index == write_index)
     {
-      // No work left; check if all directories are processed
+      // No work left. Check if all directories were processed
       if (InterlockedCompareExchange64(&write_index, write_index, write_index) == read_index)
       {
         break; // All work is done
       }
+
       continue; // Wait for more work
     }
 
@@ -105,8 +107,6 @@ DWORD thread_proc(void *args)
       list_files_from_directory(work_to_do[original_read_index]);
     }
   }
-
-  // printf("No more work for Thread ID: %ld\n", GetCurrentThreadId());
 
   return 0;
 }
